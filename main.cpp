@@ -9,8 +9,9 @@
 #include "Bank.h"
 
 int main(int argc, char* argv[]){
-	Bank bank;
-	bank.Run();
+	//Bank bank;
+	//bank.Run();
+	Account account(2345, "ct", 0);
 	return 0;
 }
 
