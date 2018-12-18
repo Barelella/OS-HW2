@@ -28,14 +28,54 @@ Account::~Account() {
 	pthread_mutex_destroy(&rd_VIP, NULL);
 }
 
-void Account::Deposit(int sum){
-    pthread_mutex_lock(wrt_balance);
-    balance += sum;
-    pthread_mutex_unlock(wrt_balance);
+Result Account::Deposit(string atm_password, int sum){
+	if(atm_password == password){
+		pthread_mutex_lock(&wrt_balance);
+		balance += sum;
+		pthread_mutex_unlock(&wrt_balance);
+		return SUCCESS;
+	}
+    else{
+		return PASSFAIL;
+    }
 }
 
-void Account::Withdraw(int sum){
-
+void Account::Withdraw(string atm_password, int sum){
+    if(atm_password == password){
+        //read lock
+        pthread_mutex_lock(&rd_balance);
+        balance_rd_cnt++;
+        if(balance_rd_cnt==1)
+            //if someone is writing, wait
+            pthread_mutex_lock(&wrt_balance);
+        pthread_mutex_unlock(&rd_balance);
+        // now there's at least one reader from balance
+        if(balance>=sum){
+            pthread_mutex_lock(&rd_balance);
+            //stopped reading from balance
+            balance_rd_cnt--;
+            if(balance_rd_cnt==0)
+                pthread_mutex_unlock(&wrt_balance);
+            pthread_mutex_unlock(&rd_balance);
+            //changing the balance
+            pthread_mutex_lock(&wrt_balance);
+            balance -= sum;
+            pthread_mutex_unlock(&wrt_balance);
+            return SUCCESS;
+        }
+        else{
+            pthread_mutex_lock(&rd_balance);
+            //stopped reading from balance
+            balance_rd_cnt--;
+            if(balance_rd_cnt==0)
+                pthread_mutex_unlock(&wrt_balance);
+            pthread_mutex_unlock(&rd_balance);
+            return AMNTFAIL;
+        }
+    }
+    else{
+        return PASSFAIL;
+    }
 }
 
 bool Account::IsVIP(){
@@ -44,6 +84,10 @@ bool Account::IsVIP(){
 
 void Account::MakeVIP(){
 
+}
+
+string Account::GetPassword() const {
+    return password;
 }
 
 

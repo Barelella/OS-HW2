@@ -12,10 +12,12 @@
 #include <pthread.h>
 using namespace std;
 
+typedef enum {SUCCESS, PASSFAIL, AMNTFAIL,FAILURE} Result;
+
 class Account {
 private:
 	int accountNumber;
-	string password;
+	string password const;
 	int balance;
 	bool isVIP;
 	//counters for reader-writer problem
@@ -32,10 +34,11 @@ public:
 	Account();
 	virtual ~Account();
 
-	void Deposit(int sum);
-	void Withdraw(int sum);
+	void Deposit(string atm_password, int sum);
+	void Withdraw(string atm_password, int sum);
 	bool IsVIP();
 	void MakeVIP();
+	string GetPassword() const;
 };
 
 #endif /* ACCOUNT_H_ */
