@@ -15,7 +15,7 @@
 class Bank {
 private:
 	std::list<Account> accounts;
-	std::list<Atm> atms;
+	std::list<Atm> ATMs;
 
 public:
 	Bank();

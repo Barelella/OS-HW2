@@ -38,8 +38,9 @@ public:
     Result Deposit(string atm_password, int sum);
     Result Withdraw(string atm_password, int sum);
 	bool IsVIP();
-	void MakeVIP();
-	string GetPassword() const;
+    Result MakeVIP(string atm_password);
+    int GetBalance(string atm_password);
+    friend Result Transfer(string src_password, Account& dst, Account& src, int amount);
 };
 
 #endif /* ACCOUNT_H_ */
