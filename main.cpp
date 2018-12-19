@@ -7,11 +7,17 @@
 #include <iostream>
 
 #include "Bank.h"
+using namespace std;
 
 int main(int argc, char* argv[]){
 	//Bank bank;
 	//bank.Run();
-	Account account(2345, "ct", 0);
+	string pass = "abcd";
+	Account account(2345, pass, 0);
+	account.Deposit(pass, 100);
+	account.Withdraw("cdef", 7);
+	account.Withdraw(pass, 111);
+	account.Withdraw(pass, 7);
 	return 0;
 }
 
