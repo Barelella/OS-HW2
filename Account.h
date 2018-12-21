@@ -10,6 +10,7 @@
 
 #include <string>
 #include <pthread.h>
+#include <iostream>
 using namespace std;
 
 typedef enum {SUCCESS, PASSFAIL, AMNTFAIL,FAILURE} Result;
@@ -17,7 +18,7 @@ typedef enum {SUCCESS, PASSFAIL, AMNTFAIL,FAILURE} Result;
 class Account {
 private:
 	int accountNumber;
-	string password const;
+	const string password;
 	int balance;
 	bool isVIP;
 	//counters for reader-writer problem
@@ -31,14 +32,15 @@ private:
     pthread_mutex_t rd_VIP;
 
 public:
-	Account();
+	Account(int acc_num_, string password_, int balance_);
 	virtual ~Account();
 
-	void Deposit(string atm_password, int sum);
-	void Withdraw(string atm_password, int sum);
+    Result Deposit(string atm_password, int sum);
+    Result Withdraw(string atm_password, int sum);
 	bool IsVIP();
-	void MakeVIP();
-	string GetPassword() const;
+    Result MakeVIP(string atm_password);
+    int GetBalance(string atm_password);
+    friend Result Transfer(string src_password, Account& dst, Account& src, int amount);
 };
 
 #endif /* ACCOUNT_H_ */
