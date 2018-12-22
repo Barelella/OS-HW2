@@ -8,11 +8,21 @@
 #ifndef ATM_H_
 #define ATM_H_
 
-#include "Account.h"
+#include <fstream>
+#include <iostream>
+#include <cstring>
+#include <stdlib.h>
+#include "Bank.h"
 
 class Atm {
+private:
+	Bank& bank;
+	int serialNumber;
+	string fileName;
+	ofstream& log;
+
 public:
-	Atm();
+	Atm(Bank& bank, int serialNumber, string fileName, ofstream& log);
 	virtual ~Atm();
 
 	void Run();

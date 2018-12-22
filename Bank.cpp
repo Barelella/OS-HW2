@@ -16,11 +16,7 @@ Bank::~Bank() {
 	// TODO Auto-generated destructor stub
 }
 
-void Bank::Init(void* inputFiles){
-	return;
-}
-
-void Bank::Run(){
+void Bank::Init(void* inputFiles){	// not sure if necessary
 	return;
 }
 
@@ -29,5 +25,9 @@ void Bank::ChargeCommissions(){
 }
 
 void Bank::PrintStatus(){
+
+}
+
+void Bank::CreateAccount(int accountNumber, string password, int initialBalance){
 
 }

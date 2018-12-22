@@ -9,21 +9,21 @@
 #define BANK_H_
 
 #include <list>
+#include <fstream>
 #include "Account.h"
-#include "Atm.h"
 
 class Bank {
 private:
 	std::list<Account> accounts;
-	std::list<Atm> ATMs;
+	int y;
 
 public:
 	Bank();
 	virtual ~Bank();
 	void Init(void* inputFiles);
-	void Run();
 	void ChargeCommissions();
 	void PrintStatus();
+	void CreateAccount(int accountNumber, string password, int initialBalance);
 };
 
 #endif /* BANK_H_ */
