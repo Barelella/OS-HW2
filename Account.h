@@ -17,7 +17,7 @@ typedef enum {SUCCESS, PASSFAIL, AMNTFAIL,FAILURE} Result;
 
 class Account {
 private:
-	int accountNumber;
+	const int accountNumber;
 	const string password;
 	int balance;
 	bool isVIP;
@@ -40,6 +40,7 @@ public:
 	bool IsVIP();
     Result MakeVIP(string atm_password);
     int GetBalance(string atm_password);
+    int GetID() const;
     friend Result Transfer(string src_password, Account& dst, Account& src, int amount);
 };
 

@@ -23,7 +23,7 @@ public:
 	void Init(void* inputFiles);
 	void ChargeCommissions();
 	void PrintStatus();
-	void CreateAccount(int accountNumber, string password, int initialBalance);
+	Result CreateAccount(int accountNumber, string password, int initialBalance);
 };
 
 #endif /* BANK_H_ */
