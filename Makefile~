@@ -1,7 +1,7 @@
 # Makefile for the smash program
 CC = g++
 CFLAGS = -g -Wall
-CCLINK = $(CC) -pthread
+CCLINK = $(CC)
 OBJS =  main.o Account.o Atm.o Bank.o
 RM = rm -f
 # Creating the  executable
