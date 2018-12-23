@@ -12,18 +12,26 @@
 #include <fstream>
 #include "Account.h"
 
+const int PASSWORD_LENGTH = 4;
+
 class Bank {
 private:
 	std::list<Account> accounts;
-	int y;
+	int bankBalance;
+	pthread_mutex_t printLock;
 
 public:
 	Bank();
 	virtual ~Bank();
-	void Init(void* inputFiles);
 	void ChargeCommissions();
 	void PrintStatus();
-	void CreateAccount(int accountNumber, string password, int initialBalance);
+	Account& GetAccount(int accountNumber);
+	bool IsAccountExist(int serialNumber);
+	Result CreateAccount(int accountNumber, string password, int initialBalance);
+	Result MakeVip(int accountNumber, string password);
+	Result Deposit(int accountNumber, string password, int amount);
+	Result Withdraw(int accountNumber, string password, int amount);
+	Result GetBalance(int accountNumber, string password);
 };
 
 #endif /* BANK_H_ */

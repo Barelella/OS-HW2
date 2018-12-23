@@ -11,9 +11,17 @@
 #include <string>
 #include <pthread.h>
 #include <iostream>
+#include <unistd.h>
 using namespace std;
 
-typedef enum {SUCCESS, PASSFAIL, AMNTFAIL,FAILURE} Result;
+typedef enum {	SUCCESS,
+				PASSWORD_FAIL,
+				AMOUNT_FAIL,
+				ACCOUNT_ALREADY_EXISTS,
+				ACCOUNT_DOESNT_EXIST,
+				ACCOUNT_FAILURE,
+				INITIAL_BALANCE_FAIL
+} Result;
 
 class Account {
 private:
@@ -32,15 +40,19 @@ private:
     pthread_mutex_t rd_VIP;
 
 public:
+    Account();
 	Account(int acc_num_, string password_, int balance_);
 	virtual ~Account();
 
     Result Deposit(string atm_password, int sum);
-    Result Withdraw(string atm_password, int sum);
+    Result Withdraw(string atm_password, int sum, bool needAtmWait = true);
 	bool IsVIP();
     Result MakeVIP(string atm_password);
-    int GetBalance(string atm_password);
+    int GetBalance(string atm_password, bool needAtmWait = true);
+    string GetPassword();
     friend Result Transfer(string src_password, Account& dst, Account& src, int amount);
+    int GetAccountNumber();
+    bool operator<(Account&);
 };
 
 #endif /* ACCOUNT_H_ */
