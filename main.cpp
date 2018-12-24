@@ -11,6 +11,7 @@
 
 #include "Bank.h"
 #include "Atm.h"
+#include "Log.h"
 
 const int BANK_STATUS_SLEEP = 3;
 
@@ -51,8 +52,6 @@ void* BankPrintThreadFunction(void* inputBank){
 
 int main(int argc, char* argv[]){
 
-
-
 	int atmsNum = ValidateInputArguments(argc, argv);
 	if(-1 == atmsNum){
 		perror("Illegal program arguments\n");
@@ -61,13 +60,14 @@ int main(int argc, char* argv[]){
 
 	// Initializations
 	atmsFinish = false;
-	Bank bank;
-	ofstream log;
-	log.open("log.txt");
+	Log log("log.txt");
+	Bank bank(log);
+
 	list<Atm> atm_list;
 
 	// Create all Atms
 	for(int i = 0; i < atmsNum; i++){
+
 		Atm newAtm(bank, i+1, argv[i+2], log);
 		atm_list.push_back(newAtm);
 	}
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]){
 		return 0;
 	}
 
-	// TODO: create printing and commission threads
+	// TODO: create commission threads
 
 	// Run all atms
 	for(int i = 0; i < atmsNum; ++i){
@@ -103,10 +103,8 @@ int main(int argc, char* argv[]){
 
 	// TODO: wait for commission thread
 
-	bank.PrintStatus();
+	bank.PrintStatus();		// Print bank final status
 	delete[] atmThreads;
-	log.close();
 	// Account account(2345, "ct", 0);
 	return 0;
 }
-

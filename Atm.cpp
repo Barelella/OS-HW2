@@ -10,7 +10,7 @@
 const int MAX_ARG = 15;
 const unsigned int ATM_USLEEP = 100000;
 
-Atm::Atm(Bank& bank, int serialNumber, string fileName, ofstream& log) :
+Atm::Atm(Bank& bank, int serialNumber, string fileName, Log& log) :
 	bank(bank), serialNumber(serialNumber), fileName(fileName), log(log){
 
 }
@@ -42,7 +42,7 @@ void Atm::WriteToLog(Action action, char* args[], Result error){
 	switch(error){
 		case ACCOUNT_DOESNT_EXIST:
 			log << "Error " << serialNumber << ": Your transaction failed - ";
-			log << "account id " << args[1] << "does not exist" << endl;
+			log << "account id " << args[1] << " does not exist" << endl;
 			return;
 		case ACCOUNT_ALREADY_EXISTS:
 			log << "Error " << serialNumber << ": Your transaction failed - ";
@@ -54,11 +54,16 @@ void Atm::WriteToLog(Action action, char* args[], Result error){
 			return;
 		case AMOUNT_FAIL:
 			log << "Error " << serialNumber << ": Your transaction failed - ";
-			log << "account id " << args[1] << " balance is lower than " << args[3] << endl;
+			log << "account id " << args[1] << " balance is lower than " ;
+			log << args[(action == TRANSFER) ? 4 : 3] << endl;
 			return;
 		case INITIAL_BALANCE_FAIL:
 			log << "Error " << serialNumber << ": Your transaction failed - ";
 			log << "account id " << args[1] << " initial balance is lower than 0"  << endl;
+			return;
+		case TRANSFER_TARGET_DOESNT_EXIST:
+			log << "Error " << serialNumber << ": Your transaction failed - ";
+			log << "account id " << args[3] << " does not exist" << endl;
 			return;
 
 		case SUCCESS:
@@ -83,14 +88,14 @@ void Atm::WriteToLog(Action action, char* args[], Result error){
 				case CHECK_BALANCE:
 					log << serialNumber << ": Account " << args[1] << " balance is ";
 					log <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					log << endl;
+					log << "" << endl;
 					return;
 				case TRANSFER:
-					log << ": Transfer " << args[4] << " from account ";
+					log << serialNumber << ": Transfer " << args[4] << " from account ";
 					log << args[1] << " to account " << args[3];
 					log << " new account balance is " ;
 					log <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					log << " new target account balance is ";
+					log << " new target account balance is " << endl;
 					// TODO: get target account balance without password?!
 					return;
 				default:
@@ -158,7 +163,8 @@ void Atm::Run(){
 			WriteToLog(CHECK_BALANCE, args, commandResult);
 			break;
 		case TRANSFER:
-			// TODO: transfer money
+			commandResult = bank.BankTransfer(atoi(args[1]), args[2], atoi(args[3]), atoi(args[4]));
+			WriteToLog(TRANSFER, args, commandResult);
 			break;
 		default:
 			// TODO: illegal action (not needed)
