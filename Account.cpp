@@ -27,6 +27,13 @@ void RemoveReader(pthread_mutex_t rd_lock, pthread_mutex_t wrt_lock, int rd_coun
     pthread_mutex_unlock(&rd_lock);
 }
 
+// Default constructor
+Account::Account():
+		accountNumber(-1), password("0000"), balance(0), isVIP(false){
+    balance_rd_cnt = 0;
+    VIP_rd_cnt = 0;
+}
+
 ///Account methods
 Account::Account(int acc_num_, string password_, int balance_) :
 	accountNumber(acc_num_), password(password_), balance(balance_), isVIP(false){
@@ -51,26 +58,30 @@ Account::~Account() {
 
 Result Account::Deposit(string atm_password, int sum){
     if(atm_password != password)
-        return PASSFAIL;
+        return PASSWORD_FAIL;
     pthread_mutex_lock(&wrt_balance);
-    balance += sum;
+		balance += sum;
+		sleep(1);
     pthread_mutex_unlock(&wrt_balance);
     return SUCCESS;
 }
 
 
-Result Account::Withdraw(string atm_password, int sum){
+Result Account::Withdraw(string atm_password, int sum, bool needAtmWait){
     if(atm_password != password)
-        return PASSFAIL;
+        return PASSWORD_FAIL;
     AddReader(rd_balance, wrt_balance, balance_rd_cnt);
     if(balance < sum){
         RemoveReader(rd_balance, wrt_balance, balance_rd_cnt);
-        return AMNTFAIL;
+        return AMOUNT_FAIL;
     }
     RemoveReader(rd_balance, wrt_balance, balance_rd_cnt);
     //changing the balance
     pthread_mutex_lock(&wrt_balance);
-    balance -= sum;
+		balance -= sum;
+		if(needAtmWait){
+			sleep(1);
+		}
     pthread_mutex_unlock(&wrt_balance);
     return SUCCESS;
 }
@@ -88,9 +99,10 @@ bool Account::IsVIP(){
 
 Result Account::MakeVIP(string atm_password){
     if(password==atm_password)
-        return PASSFAIL;
+        return PASSWORD_FAIL;
     pthread_mutex_lock(&wrt_VIP);
         isVIP = true;
+        sleep(1);
     pthread_mutex_unlock(&wrt_VIP);
     return SUCCESS;
 }
@@ -99,31 +111,48 @@ int Account::GetID() const{
     return accountNumber;
 }
 
-int Account::GetBalance(string atm_password){
+int Account::GetBalance(string atm_password,bool needAtmWait){
     if(password!=atm_password)
         return -1;
     int balance_stat;
     AddReader(rd_balance,wrt_balance,balance_rd_cnt);
         balance_stat = balance;
+        if(needAtmWait){
+        	sleep(1);
+        }
     RemoveReader(rd_balance,wrt_balance,balance_rd_cnt);
     return balance;
+}
+
+// Needed by the bank for printing
+string Account::GetPassword(){
+	return password;
 }
 
 
 Result Transfer(const string src_password, Account& dst, Account& src, int amount){
     if(src_password != src.password)
-        return PASSFAIL;
+        return PASSWORD_FAIL;
     AddReader(src.rd_balance, src.wrt_balance, src.balance_rd_cnt);
     if(src.balance < amount){
         RemoveReader(src.rd_balance, src.wrt_balance, src.balance_rd_cnt);
-        return AMNTFAIL;
+        return AMOUNT_FAIL;
     }
     RemoveReader(src.rd_balance, src.wrt_balance, src.balance_rd_cnt);
     pthread_mutex_lock(&src.wrt_balance);
         pthread_mutex_lock(&dst.wrt_balance);
             src.balance -= amount;
             dst.balance += amount;
+            sleep(1);
         pthread_mutex_unlock(&dst.wrt_balance);
     pthread_mutex_unlock(&src.wrt_balance);
     return SUCCESS;
+}
+
+int Account::GetAccountNumber(){
+	return accountNumber;
+}
+
+bool Account::operator<(Account& otherAccount){
+	return (GetAccountNumber() < otherAccount.GetAccountNumber());
 }
