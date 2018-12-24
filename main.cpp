@@ -12,6 +12,10 @@
 #include "Bank.h"
 #include "Atm.h"
 
+const int BANK_STATUS_SLEEP = 3;
+
+bool atmsFinish;
+
 int ValidateInputArguments(int argc, char* argv[]){
 
 	if(argc <= 1){		// Not enough input arguments
@@ -36,7 +40,18 @@ void* AtmThreadFunction(void* atmInput){
 	pthread_exit(NULL);
 }
 
+void* BankPrintThreadFunction(void* inputBank){
+	Bank& bank = *(Bank *) inputBank;
+	while(!atmsFinish){
+		bank.PrintStatus();
+		sleep(BANK_STATUS_SLEEP);
+	}
+	pthread_exit(NULL);
+}
+
 int main(int argc, char* argv[]){
+
+
 
 	int atmsNum = ValidateInputArguments(argc, argv);
 	if(-1 == atmsNum){
@@ -45,6 +60,7 @@ int main(int argc, char* argv[]){
 	}
 
 	// Initializations
+	atmsFinish = false;
 	Bank bank;
 	ofstream log;
 	log.open("log.txt");
@@ -68,16 +84,28 @@ int main(int argc, char* argv[]){
 		++i;
 	}
 
+	// Create bank thread
+	pthread_t bankPrintThread;
+	if(0 != pthread_create(&bankPrintThread, NULL, BankPrintThreadFunction, (void *)&bank)){
+		perror("Failed to create bank printing thread");
+		return 0;
+	}
+
 	// TODO: create printing and commission threads
 
 	// Run all atms
 	for(int i = 0; i < atmsNum; ++i){
 		pthread_join(atmThreads[i], NULL);
 	}
+	atmsFinish = true;
 
-	// TODO: wait for printing and commission thread
+	pthread_join(bankPrintThread, NULL);
 
+	// TODO: wait for commission thread
+
+	bank.PrintStatus();
 	delete[] atmThreads;
+	log.close();
 	// Account account(2345, "ct", 0);
 	return 0;
 }
