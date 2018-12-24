@@ -18,39 +18,24 @@ Log::~Log() {
 	pthread_mutex_destroy(&lock);
 }
 
-template <class T>
-std::ostream& operator<<(Log& log, T input){
-	pthread_mutex_lock(&log.lock);
-	std::ostream& resultStream = log.logStream << input.toString();
-	pthread_mutex_unlock(&log.lock);
-	return resultStream;
+void Log::Write(std::string str){
+	pthread_mutex_lock(&lock);
+	logStream << str;
+	pthread_mutex_unlock(&lock);
 }
 
-std::ostream& operator<<(Log& log, int num){
-	pthread_mutex_lock(&log.lock);
-	std::ostream& resultStream = log.logStream << num;
-	pthread_mutex_unlock(&log.lock);
-	return resultStream;
+void Log::WriteLine(std::string str){
+	pthread_mutex_lock(&lock);
+	logStream << str << std::endl;
+	pthread_mutex_unlock(&lock);
 }
 
-std::ostream& operator<<(Log& log, double num){
-	pthread_mutex_lock(&log.lock);
-	std::ostream& resultStream = log.logStream << num;
-	pthread_mutex_unlock(&log.lock);
-	return resultStream;
+std::string toString(std::ofstream& ofstream){
+	std::ostringstream ss;
+	ss << ofstream.rdbuf();
+	return ss.str();
 }
 
-std::ostream& operator<<(Log& log, char* str){
-	pthread_mutex_lock(&log.lock);
-	std::ostream& resultStream = log.logStream << str;
-	pthread_mutex_unlock(&log.lock);
-	return resultStream;
+void Log::WriteLine(std::stringstream& sstream){
+	WriteLine(sstream.str());
 }
-
-std::ostream& operator<<(Log& log, const char* str){
-	pthread_mutex_lock(&log.lock);
-	std::ostream& resultStream = log.logStream << str;
-	pthread_mutex_unlock(&log.lock);
-	return resultStream;
-}
-

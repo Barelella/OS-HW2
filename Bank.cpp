@@ -50,7 +50,12 @@ bool Bank::IsAccountExist(int accountNumber){
 		return false;
 	}
 	Account& accountFound = GetAccount(accountNumber);
-	return (-1 != accountFound.GetAccountNumber());
+	// return (-1 != accountFound.GetAccountNumber());
+	if(-1 == accountFound.GetAccountNumber()){
+		delete &accountFound;	// made a default account, must delete it
+		return false;
+	}
+	return true;
 }
 
 bool IsLegalPassword(string password){
@@ -79,7 +84,6 @@ Result Bank::CreateAccount(int accountNumber, string password, int initialBalanc
 	if(initialBalance < 0 ){
 		return INITIAL_BALANCE_FAIL;
 	}
-
 	// All parameters are OK, insert new account to list (and keep it sorted)
 	Account newAccount(accountNumber, password, initialBalance);
 	accounts.push_back(newAccount);
@@ -114,7 +118,7 @@ Result Bank::GetBalance(int accountNumber, string password){
 	if(!IsAccountExist(accountNumber)){
 		return ACCOUNT_DOESNT_EXIST;
 	}
-	return GetAccount(accountNumber).GetBalance(password) == -1 ? PASSWORD_FAIL : SUCCESS;
+	return (GetAccount(accountNumber).GetBalance(password) == -1 ? PASSWORD_FAIL : SUCCESS);
 }
 
 Result Bank::BankTransfer(int srcAccountNum, string password, int dstAccountNum, int amount){

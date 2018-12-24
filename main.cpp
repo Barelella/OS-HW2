@@ -65,20 +65,22 @@ int main(int argc, char* argv[]){
 
 	list<Atm> atm_list;
 
+	cout << "initializations ok" << endl;
 	// Create all Atms
 	for(int i = 0; i < atmsNum; i++){
 
 		Atm newAtm(bank, i+1, argv[i+2], log);
 		atm_list.push_back(newAtm);
 	}
+	cout << "ATMs created ok" << endl;
 
 	// Run all Atms
-	pthread_t* atmThreads = new pthread_t[atmsNum];
+	pthread_t atmThreads[atmsNum];
 	int i=0;
 	for(list<Atm>::iterator it = atm_list.begin(); it != atm_list.end(); ++it){
+		cout << "ATM" << i << "created" << endl;
 		if(0 != pthread_create(&atmThreads[i], NULL, AtmThreadFunction, (void*) &(*it))){
 			perror("Failed to create thread");
-			delete[] atmThreads;
 			return 0;
 		}
 		++i;
@@ -100,11 +102,10 @@ int main(int argc, char* argv[]){
 	atmsFinish = true;
 
 	pthread_join(bankPrintThread, NULL);
-
+	cout << "ATMs finish" << endl;
 	// TODO: wait for commission thread
 
 	bank.PrintStatus();		// Print bank final status
-	delete[] atmThreads;
 	// Account account(2345, "ct", 0);
 	return 0;
 }

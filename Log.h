@@ -2,6 +2,7 @@
 #define LOG_H_
 
 #include <fstream>
+#include <sstream>
 
 class Log {
 private:
@@ -11,19 +12,10 @@ private:
 public:
 	Log(const char* fileName);
 	~Log();
-//	friend std::ostream& operator<<(Log& log, std::ostream&);
-//	friend std::ostream& operator<<(Log& log, std::string);
-//	friend std::ostream& operator<<(Log& log, int);
 
-	template <class T>
-	friend std::ostream& operator<<(Log& log, T input);
-
-	friend std::ostream& operator<<(Log& log, int);
-	friend std::ostream& operator<<(Log& log, double);
-	friend std::ostream& operator<<(Log& log, char *);
-	friend std::ostream& operator<<(Log& log, const char *);
-
-
+	void Write(std::string str);
+	void WriteLine(std::string str);
+	void WriteLine(std::stringstream&);
 
 };
 
