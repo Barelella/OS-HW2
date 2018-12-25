@@ -8,6 +8,7 @@
 #include "Account.h"
 using namespace std;
 
+
 ///read-write functions
 void AddReader(pthread_mutex_t& rd_lock, pthread_mutex_t& wrt_lock, int& rd_count){
     pthread_mutex_lock(&rd_lock);
@@ -27,11 +28,16 @@ void RemoveReader(pthread_mutex_t& rd_lock, pthread_mutex_t& wrt_lock, int& rd_c
     pthread_mutex_unlock(&rd_lock);
 }
 
+
 // Default constructor
 Account::Account():
 		accountNumber(-1), password("0000"), balance(0), isVIP(false){
     balance_rd_cnt = 0;
     VIP_rd_cnt = 0;
+    pthread_mutex_init(&wrt_balance, NULL);
+    pthread_mutex_init(&rd_balance, NULL);
+    pthread_mutex_init(&wrt_VIP, NULL);
+    pthread_mutex_init(&rd_VIP, NULL);
 }
 
 ///Account methods
@@ -121,7 +127,7 @@ int Account::GetBalance(string atm_password,bool needAtmWait){
         	sleep(1);
         }
     RemoveReader(rd_balance,wrt_balance,balance_rd_cnt);
-    return balance;
+    return balance_stat;
 }
 
 // Needed by the bank for printing
@@ -139,13 +145,24 @@ Result Transfer(const string src_password, Account& dst, Account& src, int amoun
         return AMOUNT_FAIL;
     }
     RemoveReader(src.rd_balance, src.wrt_balance, src.balance_rd_cnt);
-    pthread_mutex_lock(&src.wrt_balance);
+    if (src.accountNumber < dst.accountNumber) {
+        pthread_mutex_lock(&src.wrt_balance);
         pthread_mutex_lock(&dst.wrt_balance);
-            src.balance -= amount;
-            dst.balance += amount;
-            sleep(1);
+        src.balance -= amount;
+        dst.balance += amount;
+        sleep(1);
+        pthread_mutex_unlock(&src.wrt_balance);
         pthread_mutex_unlock(&dst.wrt_balance);
-    pthread_mutex_unlock(&src.wrt_balance);
+    }
+    else{
+        pthread_mutex_lock(&dst.wrt_balance);
+        pthread_mutex_lock(&src.wrt_balance);
+        src.balance -= amount;
+        dst.balance += amount;
+        sleep(1);
+        pthread_mutex_unlock(&dst.wrt_balance);
+        pthread_mutex_unlock(&src.wrt_balance);
+    }
     return SUCCESS;
 }
 

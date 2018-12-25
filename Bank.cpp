@@ -24,12 +24,12 @@ Bank::~Bank() {
 }
 
 void Bank::ChargeCommissions(){
-	stringstream aux;
 	int bank_gain;
     int percentage = 2 + rand()/(RAND_MAX/3 + 1); //getting a random num between [2,4]
     double doublepercent = 100/percentage;
     for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
 		if((it->IsVIP())==false){
+			stringstream aux;
 			string password = it->GetPassword();
 			bank_gain = (int)(((double)(it->GetBalance(password, false)))/doublepercent+0.5);
 			it->Withdraw(password, bank_gain, false);
@@ -158,5 +158,4 @@ Result Bank::BankTransfer(int srcAccountNum, string password, int dstAccountNum,
 	Account& srcAccount = GetAccount(srcAccountNum);
 	Account& dstAccount = GetAccount(dstAccountNum);
 	return Transfer(password, dstAccount, srcAccount, amount);
-
 }
