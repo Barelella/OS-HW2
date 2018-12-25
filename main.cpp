@@ -13,7 +13,8 @@
 #include "Atm.h"
 #include "Log.h"
 
-const int BANK_STATUS_SLEEP = 3;
+const int BANK_STATUS_SLEEP = 0.5;
+const int BANK_COM_SLEEP = 3;
 
 bool atmsFinish;
 
@@ -43,11 +44,22 @@ void* AtmThreadFunction(void* atmInput){
 
 void* BankPrintThreadFunction(void* inputBank){
 	Bank& bank = *(Bank *) inputBank;
+    sleep(BANK_STATUS_SLEEP); // added this so bank won't print status immediately
 	while(!atmsFinish){
-		bank.PrintStatus();
+		bank.ChargeCommissions();
 		sleep(BANK_STATUS_SLEEP);
 	}
 	pthread_exit(NULL);
+}
+
+void* BankComThreadFunction(void* inputBank){
+    Bank& bank = *(Bank *) inputBank;
+    sleep(BANK_COM_SLEEP);
+    while(!atmsFinish){
+        bank.ChargeCommissions();
+        sleep(BANK_COM_SLEEP);
+    }
+    pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[]){
@@ -93,7 +105,12 @@ int main(int argc, char* argv[]){
 		return 0;
 	}
 
-	// TODO: create commission threads
+	//Create commission thread
+    pthread_t bankComThread;
+    if(0 != pthread_create(&bankComThread, NULL, BankComThreadFunction, (void *)&bank)){
+        perror("Failed to create bank commission thread");
+        return 0;
+    }
 
 	// Run all atms
 	for(int i = 0; i < atmsNum; ++i){
@@ -102,8 +119,8 @@ int main(int argc, char* argv[]){
 	atmsFinish = true;
 
 	pthread_join(bankPrintThread, NULL);
+    pthread_join(bankComThread, NULL);
 	cout << "ATMs finish" << endl;
-	// TODO: wait for commission thread
 
 	bank.PrintStatus();		// Print bank final status
 	// Account account(2345, "ct", 0);

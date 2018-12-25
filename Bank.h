@@ -20,11 +20,13 @@ private:
 	std::list<Account> accounts;
 	int bankBalance;
 	pthread_mutex_t printLock;
+    pthread_mutex_t balanceLock;
 	Log& bankLog;
 
 public:
 	Bank(Log& log);
 	virtual ~Bank();
+	void Init(void* inputFiles);
 	void ChargeCommissions();
 	void PrintStatus();
 	Account& GetAccount(int accountNumber);

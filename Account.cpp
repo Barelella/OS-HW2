@@ -107,6 +107,9 @@ Result Account::MakeVIP(string atm_password){
     return SUCCESS;
 }
 
+int Account::GetID() const{
+    return accountNumber;
+}
 
 int Account::GetBalance(string atm_password,bool needAtmWait){
     if(password!=atm_password)

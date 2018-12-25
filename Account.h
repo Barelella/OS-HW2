@@ -26,7 +26,7 @@ typedef enum {	SUCCESS,
 
 class Account {
 private:
-	int accountNumber;
+	const int accountNumber;
 	const string password;
 	int balance;
 	bool isVIP;
@@ -51,6 +51,7 @@ public:
     Result MakeVIP(string atm_password);
     int GetBalance(string atm_password, bool needAtmWait = true);
     string GetPassword();
+    int GetID() const;
     friend Result Transfer(string src_password, Account& dst, Account& src, int amount);
     int GetAccountNumber();
     bool operator<(Account&);
