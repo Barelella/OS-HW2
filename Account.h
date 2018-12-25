@@ -12,6 +12,9 @@
 #include <pthread.h>
 #include <iostream>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 using namespace std;
 
 typedef enum {	SUCCESS,

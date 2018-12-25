@@ -40,71 +40,70 @@ Action CommandToAction(char commandChar){
 
 void Atm::WriteToLog(Action action, char* args[], Result error){
 	stringstream aux;
-	switch(error){
-		case ACCOUNT_DOESNT_EXIST:
-			aux << "Error " << serialNumber << ": Your transaction failed - ";
-			aux << "account id " << args[1] << " does not exist";
-			break;
-		case ACCOUNT_ALREADY_EXISTS:
-			aux << "Error " << serialNumber << ": Your transaction failed - ";
-			aux << "account with the same id exists";
-			break;
-		case PASSWORD_FAIL:
-			aux << "Error " << serialNumber << ": Your transaction failed - ";
-			aux << "Password for account id " << args[1] << " is incorrect";
-			break;
-		case AMOUNT_FAIL:
-			aux << "Error " << serialNumber << ": Your transaction failed - ";
-			aux << "account id " << args[1] << " balance is lower than " ;
-			aux << args[(action == TRANSFER) ? 4 : 3];
-			break;
-		case INITIAL_BALANCE_FAIL:
-			aux << "Error " << serialNumber << ": Your transaction failed - ";
-			aux << "account id " << args[1] << " initial balance is lower than 0";
-			break;
-		case TRANSFER_TARGET_DOESNT_EXIST:
-			aux << "Error " << serialNumber << ": Your transaction failed - ";
-			aux << "account id " << args[3] << " does not exist";
-			break;
+	switch(error) {
+        case ACCOUNT_DOESNT_EXIST: {
+            aux << "Error " << serialNumber << ": Your transaction failed - ";
+            aux << "account id " << args[1] << " does not exist";
+        }break;
+        case ACCOUNT_ALREADY_EXISTS: {
+            aux << "Error " << serialNumber << ": Your transaction failed - ";
+            aux << "account with the same id exists";
+        }break;
+        case PASSWORD_FAIL: {
+            aux << "Error " << serialNumber << ": Your transaction failed - ";
+            aux << "Password for account id " << args[1] << " is incorrect";
+        }break;
+		case AMOUNT_FAIL: {
+		    aux << "Error " << serialNumber << ": Your transaction failed - ";
+		    aux << "account id " << args[1] << " balance is lower than ";
+		    aux << args[(action == TRANSFER) ? 4 : 3];
+        }break;
+		case INITIAL_BALANCE_FAIL: {
+		    aux << "Error " << serialNumber << ": Your transaction failed - ";
+		    aux << "account id " << args[1] << " initial balance is lower than 0";
+        }break;
+		case TRANSFER_TARGET_DOESNT_EXIST: {
+		    aux << "Error " << serialNumber << ": Your transaction failed - ";
+		    aux << "account id " << args[3] << " does not exist";
+        }break;
+		case SUCCESS: {
+		    switch (action) {
+		        case CREATE_NEW_ACCOUNT: {
+		            aux << serialNumber << ": New account id is " << args[1];
+		            aux << " with password " << args[2];
+		            aux << " and initial balance " << args[3];
+		        }break;
+		        case VIP_ACCOUNT:
+		            break;
 
-		case SUCCESS:
-			switch(action){
-				case CREATE_NEW_ACCOUNT:
-					aux << serialNumber << ": New account id is " << args[1];
-					aux << " with password " << args[2];
-					aux << " and initial balance " << args[3];
-					break;
-				case VIP_ACCOUNT:
-					break;
-				case DEPOSIT:
-					aux << serialNumber << ": Account " << args[1] << " new balance is ";
-					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					aux << " after " << args[3] << " $ was deposited";
-					break;
-				case WITHDRAW:
-					aux << serialNumber << ": Account " << args[1] << " new balance is ";
-					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					aux << " after " << args[3] << " $ was withdrew";
-					break;
-				case CHECK_BALANCE:
-					aux << serialNumber << ": Account " << args[1] << " balance is ";
-					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					break;
-				case TRANSFER:
-                    Account src_acc = bank.GetAccount(atoi(args[1]));
-                    Account dst_acc = bank.GetAccount(atoi(args[3]));
-					aux << serialNumber << ": Transfer " << args[4] << " from account ";
-					aux << args[1] << " to account " << args[3];
-					aux << " new account balance is " ;
-					aux <<  src_acc.GetBalance(args[2], false);
-					aux << " new target account balance is ";
-					aux <<  dst_acc.GetBalance(dst_acc.GetPassword(), false); //target account balance
-					break;
-				default:
-					break;
-			}
-			break;
-
+		        case DEPOSIT: {
+		            aux << serialNumber << ": Account " << args[1] << " new balance is ";
+		            aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
+		            aux << " after " << args[3] << " $ was deposited";
+		        }break;
+		        case WITHDRAW: {
+		            aux << serialNumber << ": Account " << args[1] << " new balance is ";
+		            aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
+		            aux << " after " << args[3] << " $ was withdrew";
+		        }break;
+		        case CHECK_BALANCE: {
+		            aux << serialNumber << ": Account " << args[1] << " balance is ";
+		            aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
+		        }break;
+		        case TRANSFER: {
+		            Account src_acc = bank.GetAccount(atoi(args[1]));
+		            Account dst_acc = bank.GetAccount(atoi(args[3]));
+		            aux << serialNumber << ": Transfer " << args[4] << " from account ";
+		            aux << args[1] << " to account " << args[3];
+		            aux << " new account balance is ";
+		            aux << src_acc.GetBalance(args[2], false);
+		            aux << " new target account balance is ";
+		            aux << dst_acc.GetBalance(dst_acc.GetPassword(), false); //target account balance
+		        }break;
+		        default:
+		            break;
+		    }
+		}break;
 		default:
 			break;
 

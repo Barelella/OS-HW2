@@ -10,6 +10,7 @@
 
 #include <list>
 #include <fstream>
+#include <cmath>
 #include "Account.h"
 #include "Log.h"
 

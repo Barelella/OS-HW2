@@ -8,6 +8,7 @@
 #include "Bank.h"
 using namespace std;
 
+
 Bank::Bank(Log& log) : bankBalance(0), bankLog(log){
 	pthread_mutex_init(&printLock, NULL);
     pthread_mutex_init(&balanceLock, NULL);
@@ -26,7 +27,7 @@ void Bank::ChargeCommissions(){
     for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
 		if(it->IsVIP()){
 			string password = it->GetPassword();
-			bank_gain = it->GetBalance(password, false)/(1/doublepercent);
+			bank_gain = round(it->GetBalance(password, false)*doublepercent);
 			it->Withdraw(password, bank_gain, false);
 			pthread_mutex_lock(&balanceLock);
 				bankBalance += bank_gain;
@@ -41,7 +42,8 @@ void Bank::ChargeCommissions(){
 }
 
 void Bank::PrintStatus(){
-	pthread_mutex_lock(&printLock);//TODO: perror prints
+	pthread_mutex_lock(&printLock);
+	perror("error:");
 	printf("\033[2J");		// Clear screen
 	printf("\033[1;1H");	// Initialize cursor
 	cout << "Current Bank Status" << endl;
