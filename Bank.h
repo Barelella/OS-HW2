@@ -11,6 +11,7 @@
 #include <list>
 #include <fstream>
 #include "Account.h"
+#include "Log.h"
 
 const int PASSWORD_LENGTH = 4;
 
@@ -19,9 +20,10 @@ private:
 	std::list<Account> accounts;
 	int bankBalance;
 	pthread_mutex_t printLock;
+	Log& bankLog;
 
 public:
-	Bank();
+	Bank(Log& log);
 	virtual ~Bank();
 	void Init(void* inputFiles);
 	void ChargeCommissions();
@@ -33,6 +35,7 @@ public:
 	Result Deposit(int accountNumber, string password, int amount);
 	Result Withdraw(int accountNumber, string password, int amount);
 	Result GetBalance(int accountNumber, string password);
+	Result BankTransfer(int srcAccount, string password, int dstAccount, int amount);
 };
 
 #endif /* BANK_H_ */

@@ -9,7 +9,7 @@
 using namespace std;
 
 ///read-write functions
-void AddReader(pthread_mutex_t rd_lock, pthread_mutex_t wrt_lock, int rd_count){
+void AddReader(pthread_mutex_t& rd_lock, pthread_mutex_t& wrt_lock, int& rd_count){
     pthread_mutex_lock(&rd_lock);
         rd_count++;
         if(rd_count==1)
@@ -19,7 +19,7 @@ void AddReader(pthread_mutex_t rd_lock, pthread_mutex_t wrt_lock, int rd_count){
 }
 
 
-void RemoveReader(pthread_mutex_t rd_lock, pthread_mutex_t wrt_lock, int rd_count){
+void RemoveReader(pthread_mutex_t& rd_lock, pthread_mutex_t& wrt_lock, int& rd_count){
     pthread_mutex_lock(&rd_lock);
         rd_count--;
         if(rd_count==0)
@@ -98,7 +98,7 @@ bool Account::IsVIP(){
 
 
 Result Account::MakeVIP(string atm_password){
-    if(password==atm_password)
+    if(password!=atm_password)
         return PASSWORD_FAIL;
     pthread_mutex_lock(&wrt_VIP);
         isVIP = true;
