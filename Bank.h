@@ -20,6 +20,7 @@ private:
 	std::list<Account> accounts;
 	int bankBalance;
 	pthread_mutex_t printLock;
+    pthread_mutex_t balanceLock;
 	Log& bankLog;
 
 public:

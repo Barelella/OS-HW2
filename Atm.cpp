@@ -91,12 +91,14 @@ void Atm::WriteToLog(Action action, char* args[], Result error){
 					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
 					break;
 				case TRANSFER:
+                    Account src_acc = bank.GetAccount(atoi(args[1]));
+                    Account dst_acc = bank.GetAccount(atoi(args[3]));
 					aux << serialNumber << ": Transfer " << args[4] << " from account ";
 					aux << args[1] << " to account " << args[3];
 					aux << " new account balance is " ;
-					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
+					aux <<  src_acc.GetBalance(args[2], false);
 					aux << " new target account balance is ";
-					// TODO: get target account balance without password?!
+					aux <<  dst_acc.GetBalance(dst_acc.GetPassword(), false); //target account balance
 					break;
 				default:
 					break;

@@ -10,18 +10,38 @@ using namespace std;
 
 Bank::Bank(Log& log) : bankBalance(0), bankLog(log){
 	pthread_mutex_init(&printLock, NULL);
+    pthread_mutex_init(&balanceLock, NULL);
 }
 
 Bank::~Bank() {
 	pthread_mutex_destroy(&printLock);
+	pthread_mutex_destroy(&balanceLock);
 }
 
 void Bank::ChargeCommissions(){
+	stringstream aux;
+	int bank_gain;
+    int percentage = 2 + rand() / (RAND_MAX / 3 + 1); //getting a random num between [2,4]
+    double doublepercent = percentage/100;
+    for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
+		if(it->IsVIP()){
+			string password = it->GetPassword();
+			bank_gain = it->GetBalance(password, false)/(1/doublepercent);
+			it->Withdraw(password, bank_gain, false);
+			pthread_mutex_lock(&balanceLock);
+				bankBalance += bank_gain;
+			pthread_mutex_unlock(&balanceLock);
+			aux << "Bank: commission of " << percentage << " % were charged, ";
+			aux << "the bank gained "<< bank_gain << " $ ";
+			aux << "from account" << it->GetAccountNumber();
+			bankLog.WriteLine(aux);
+		}
+    }
 	return;
 }
 
 void Bank::PrintStatus(){
-	pthread_mutex_lock(&printLock);
+	pthread_mutex_lock(&printLock);//TODO: perror prints
 	printf("\033[2J");		// Clear screen
 	printf("\033[1;1H");	// Initialize cursor
 	cout << "Current Bank Status" << endl;
@@ -31,8 +51,9 @@ void Bank::PrintStatus(){
 		cout << "Balance - " << it->GetBalance(it->GetPassword(), false) << " $ , ";
 		cout << "Account Password - " << it->GetPassword() << endl;
 	}
-
+	pthread_mutex_lock(&balanceLock);
 	cout << "The Bank has " << bankBalance << " $" << endl;
+	pthread_mutex_unlock(&balanceLock);
 	pthread_mutex_unlock(&printLock);
 }
 
