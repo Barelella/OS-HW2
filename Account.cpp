@@ -144,8 +144,8 @@ Result Transfer(const string src_password, Account& dst, Account& src, int amoun
             src.balance -= amount;
             dst.balance += amount;
             sleep(1);
-        pthread_mutex_unlock(&dst.wrt_balance);
-    pthread_mutex_unlock(&src.wrt_balance);
+        pthread_mutex_unlock(&src.wrt_balance);
+    pthread_mutex_unlock(&dst.wrt_balance);
     return SUCCESS;
 }
 
