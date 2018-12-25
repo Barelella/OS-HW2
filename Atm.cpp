@@ -100,15 +100,17 @@ void Atm::WriteToLog(Action action, char* args[], Result error){
 		            aux << " new target account balance is ";
 		            aux << dst_acc.GetBalance(dst_acc.GetPassword(), false); //target account balance
 		        }break;
-		        default:
-		            break;
+				default: {
+					break;
+				}
 		    }
 		}break;
-		default:
+		default: {
+			cout<<"def"<<endl;
 			break;
+		}
 
 	}
-
 	if(aux.str().size() > 0){
 		log.WriteLine(aux);
 	}
