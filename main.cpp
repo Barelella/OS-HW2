@@ -13,7 +13,7 @@
 #include "Atm.h"
 #include "Log.h"
 
-const int BANK_STATUS_SLEEP = 0.5;
+const int BANK_STATUS_SLEEP = 500000;
 const int BANK_COM_SLEEP = 3;
 
 bool atmsFinish;
@@ -44,17 +44,17 @@ void* AtmThreadFunction(void* atmInput){
 
 void* BankPrintThreadFunction(void* inputBank){
 	Bank& bank = *(Bank *) inputBank;
-    sleep(BANK_STATUS_SLEEP); // added this so bank won't print status immediately
+    usleep(BANK_STATUS_SLEEP); // added this so bank won't print status immediately
 	while(!atmsFinish){
-		bank.ChargeCommissions();
-		sleep(BANK_STATUS_SLEEP);
+		bank.PrintStatus();
+		usleep(BANK_STATUS_SLEEP);
 	}
 	pthread_exit(NULL);
 }
 
 void* BankComThreadFunction(void* inputBank){
     Bank& bank = *(Bank *) inputBank;
-    sleep(BANK_COM_SLEEP);
+    //sleep(BANK_COM_SLEEP);
     while(!atmsFinish){
         bank.ChargeCommissions();
         sleep(BANK_COM_SLEEP);
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
 	pthread_t atmThreads[atmsNum];
 	int i=0;
 	for(list<Atm>::iterator it = atm_list.begin(); it != atm_list.end(); ++it){
-		cout << "ATM" << i << "created" << endl;
+		cout << "ATM " << i << " created" << endl;
 		if(0 != pthread_create(&atmThreads[i], NULL, AtmThreadFunction, (void*) &(*it))){
 			perror("Failed to create thread");
 			return 0;
@@ -112,7 +112,7 @@ int main(int argc, char* argv[]){
         return 0;
     }
 
-	// Run all atms
+	// Run all atms & threads
 	for(int i = 0; i < atmsNum; ++i){
 		pthread_join(atmThreads[i], NULL);
 	}

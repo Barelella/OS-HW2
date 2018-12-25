@@ -8,32 +8,37 @@
 #include "Bank.h"
 using namespace std;
 
+
 Bank::Bank(Log& log) : bankBalance(0), bankLog(log){
-	pthread_mutex_init(&printLock, NULL);
-    pthread_mutex_init(&balanceLock, NULL);
+	int ret1 = pthread_mutex_init(&printLock, NULL);
+    int ret2 = pthread_mutex_init(&balanceLock, NULL);
+    if ((ret1 != 0)||(ret2 != 0))
+    	perror("Bank mutex init error:");
 }
 
 Bank::~Bank() {
-	pthread_mutex_destroy(&printLock);
-	pthread_mutex_destroy(&balanceLock);
+	int ret1 = pthread_mutex_destroy(&printLock);
+	int ret2 = pthread_mutex_destroy(&balanceLock);
+	if ((ret1 != 0)||(ret2 != 0))
+		perror("Bank mutex destroy error:");
 }
 
 void Bank::ChargeCommissions(){
 	stringstream aux;
 	int bank_gain;
-    int percentage = 2 + rand() / (RAND_MAX / 3 + 1); //getting a random num between [2,4]
-    double doublepercent = percentage/100;
+    int percentage = 2 + rand()/(RAND_MAX/3 + 1); //getting a random num between [2,4]
+    double doublepercent = 100/percentage;
     for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
-		if(it->IsVIP()){
+		if((it->IsVIP())==false){
 			string password = it->GetPassword();
-			bank_gain = it->GetBalance(password, false)/(1/doublepercent);
+			bank_gain = (int)(((double)(it->GetBalance(password, false)))/doublepercent+0.5);
 			it->Withdraw(password, bank_gain, false);
 			pthread_mutex_lock(&balanceLock);
 				bankBalance += bank_gain;
 			pthread_mutex_unlock(&balanceLock);
 			aux << "Bank: commission of " << percentage << " % were charged, ";
 			aux << "the bank gained "<< bank_gain << " $ ";
-			aux << "from account" << it->GetAccountNumber();
+			aux << "from account " << it->GetAccountNumber();
 			bankLog.WriteLine(aux);
 		}
     }
@@ -41,7 +46,7 @@ void Bank::ChargeCommissions(){
 }
 
 void Bank::PrintStatus(){
-	pthread_mutex_lock(&printLock);//TODO: perror prints
+	pthread_mutex_lock(&printLock);
 	printf("\033[2J");		// Clear screen
 	printf("\033[1;1H");	// Initialize cursor
 	cout << "Current Bank Status" << endl;

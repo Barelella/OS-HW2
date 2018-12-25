@@ -6,7 +6,7 @@ OBJS =  main.o Account.o Atm.o Bank.o Log.o
 RM = rm -f
 # Creating the  executable
 Bank: $(OBJS)
-	$(CCLINK) -o main $(OBJS)
+	$(CCLINK) -o Bank $(OBJS)
 # Creating the object files
 Account.o: Account.cpp Account.h
 main.o: main.cpp Account.h
