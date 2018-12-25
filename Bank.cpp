@@ -7,11 +7,12 @@
 
 #include "Bank.h"
 
-Bank::Bank() : bankBalance(0){
+Bank::Bank(Log& log) : bankBalance(0), bankLog(log){
 	pthread_mutex_init(&printLock, NULL);
 }
 
 Bank::~Bank() {
+	pthread_mutex_destroy(&printLock);
 }
 
 void Bank::ChargeCommissions(){
@@ -45,8 +46,16 @@ Account& Bank::GetAccount(int accountNumber){
 }
 
 bool Bank::IsAccountExist(int accountNumber){
+	if(0 == accountNumber){		// atoi failed, given illegal number
+		return false;
+	}
 	Account& accountFound = GetAccount(accountNumber);
-	return (-1 != accountFound.GetAccountNumber());
+	// return (-1 != accountFound.GetAccountNumber());
+	if(-1 == accountFound.GetAccountNumber()){
+		delete &accountFound;	// made a default account, must delete it
+		return false;
+	}
+	return true;
 }
 
 bool IsLegalPassword(string password){
@@ -63,6 +72,9 @@ bool IsLegalPassword(string password){
 }
 
 Result Bank::CreateAccount(int accountNumber, string password, int initialBalance){
+	if(0 == accountNumber){		// atoi failed, given illegal account number
+		return ACCOUNT_DOESNT_EXIST;
+	}
 	if(IsAccountExist(accountNumber)){
 		return ACCOUNT_ALREADY_EXISTS;
 	}
@@ -72,7 +84,6 @@ Result Bank::CreateAccount(int accountNumber, string password, int initialBalanc
 	if(initialBalance < 0 ){
 		return INITIAL_BALANCE_FAIL;
 	}
-
 	// All parameters are OK, insert new account to list (and keep it sorted)
 	Account newAccount(accountNumber, password, initialBalance);
 	accounts.push_back(newAccount);
@@ -107,5 +118,18 @@ Result Bank::GetBalance(int accountNumber, string password){
 	if(!IsAccountExist(accountNumber)){
 		return ACCOUNT_DOESNT_EXIST;
 	}
-	return GetAccount(accountNumber).GetBalance(password) == -1 ? PASSWORD_FAIL : SUCCESS;
+	return (GetAccount(accountNumber).GetBalance(password) == -1 ? PASSWORD_FAIL : SUCCESS);
+}
+
+Result Bank::BankTransfer(int srcAccountNum, string password, int dstAccountNum, int amount){
+	if(!IsAccountExist(srcAccountNum)){
+		return ACCOUNT_DOESNT_EXIST;
+	}
+	if(!IsAccountExist(dstAccountNum)){
+		return ACCOUNT_DOESNT_EXIST;
+	}
+	Account& srcAccount = GetAccount(srcAccountNum);
+	Account& dstAccount = GetAccount(dstAccountNum);
+	return Transfer(password, dstAccount, srcAccount, amount);
+
 }

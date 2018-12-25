@@ -30,10 +30,11 @@ private:
 	Bank& bank;
 	int serialNumber;
 	string fileName;
-	ofstream& log;
+	Log& log;
+	//ofstream& log;
 
 public:
-	Atm(Bank& bank, int serialNumber, string fileName, ofstream& log);
+	Atm(Bank& bank, int serialNumber, string fileName, Log& log);
 	virtual ~Atm();
 
 	void Run();

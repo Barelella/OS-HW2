@@ -10,7 +10,7 @@
 const int MAX_ARG = 15;
 const unsigned int ATM_USLEEP = 100000;
 
-Atm::Atm(Bank& bank, int serialNumber, string fileName, ofstream& log) :
+Atm::Atm(Bank& bank, int serialNumber, string fileName, Log& log) :
 	bank(bank), serialNumber(serialNumber), fileName(fileName), log(log){
 
 }
@@ -39,68 +39,77 @@ Action CommandToAction(char commandChar){
 }
 
 void Atm::WriteToLog(Action action, char* args[], Result error){
+	stringstream aux;
 	switch(error){
 		case ACCOUNT_DOESNT_EXIST:
-			log << "Error " << serialNumber << ": Your transaction failed - ";
-			log << "account id " << args[1] << "does not exist" << endl;
-			return;
+			aux << "Error " << serialNumber << ": Your transaction failed - ";
+			aux << "account id " << args[1] << " does not exist";
+			break;
 		case ACCOUNT_ALREADY_EXISTS:
-			log << "Error " << serialNumber << ": Your transaction failed - ";
-			log << "account with the same id exists" << endl;
-			return;
+			aux << "Error " << serialNumber << ": Your transaction failed - ";
+			aux << "account with the same id exists";
+			break;
 		case PASSWORD_FAIL:
-			log << "Error " << serialNumber << ": Your transaction failed - ";
-			log << "Password for account id " << args[1] << " is incorrect" << endl;
-			return;
+			aux << "Error " << serialNumber << ": Your transaction failed - ";
+			aux << "Password for account id " << args[1] << " is incorrect";
+			break;
 		case AMOUNT_FAIL:
-			log << "Error " << serialNumber << ": Your transaction failed - ";
-			log << "account id " << args[1] << " balance is lower than " << args[3] << endl;
-			return;
+			aux << "Error " << serialNumber << ": Your transaction failed - ";
+			aux << "account id " << args[1] << " balance is lower than " ;
+			aux << args[(action == TRANSFER) ? 4 : 3];
+			break;
 		case INITIAL_BALANCE_FAIL:
-			log << "Error " << serialNumber << ": Your transaction failed - ";
-			log << "account id " << args[1] << " initial balance is lower than 0"  << endl;
-			return;
+			aux << "Error " << serialNumber << ": Your transaction failed - ";
+			aux << "account id " << args[1] << " initial balance is lower than 0";
+			break;
+		case TRANSFER_TARGET_DOESNT_EXIST:
+			aux << "Error " << serialNumber << ": Your transaction failed - ";
+			aux << "account id " << args[3] << " does not exist";
+			break;
 
 		case SUCCESS:
 			switch(action){
 				case CREATE_NEW_ACCOUNT:
-					log << serialNumber << ": New account id is " << args[1];
-					log << " with password " << args[2];
-					log << " and initial balance " << args[3] << endl;
-					return;
+					aux << serialNumber << ": New account id is " << args[1];
+					aux << " with password " << args[2];
+					aux << " and initial balance " << args[3];
+					break;
 				case VIP_ACCOUNT:
-					return;
+					break;
 				case DEPOSIT:
-					log << serialNumber << ": Account " << args[1] << " new balance is ";
-					log <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					log << " after " << args[3] << " $ was deposited" << endl;
-					return;
+					aux << serialNumber << ": Account " << args[1] << " new balance is ";
+					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
+					aux << " after " << args[3] << " $ was deposited";
+					break;
 				case WITHDRAW:
-					log << serialNumber << ": Account " << args[1] << " new balance is ";
-					log <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					log << " after " << args[3] << " $ was withdrew" << endl;
-					return;
+					aux << serialNumber << ": Account " << args[1] << " new balance is ";
+					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
+					aux << " after " << args[3] << " $ was withdrew";
+					break;
 				case CHECK_BALANCE:
-					log << serialNumber << ": Account " << args[1] << " balance is ";
-					log <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					log << endl;
-					return;
+					aux << serialNumber << ": Account " << args[1] << " balance is ";
+					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
+					break;
 				case TRANSFER:
-					log << ": Transfer " << args[4] << " from account ";
-					log << args[1] << " to account " << args[3];
-					log << " new account balance is " ;
-					log <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
-					log << " new target account balance is ";
+					aux << serialNumber << ": Transfer " << args[4] << " from account ";
+					aux << args[1] << " to account " << args[3];
+					aux << " new account balance is " ;
+					aux <<  bank.GetAccount(atoi(args[1])).GetBalance(args[2], false);
+					aux << " new target account balance is ";
 					// TODO: get target account balance without password?!
-					return;
+					break;
 				default:
-					return;
+					break;
 			}
 			break;
 
 		default:
-			return;
+			break;
 
+	}
+
+	if(aux.str().size() > 0){
+		log.WriteLine(aux);
 	}
 
 }
@@ -109,7 +118,6 @@ void Atm::Run(){
 	// cout << "Atm no. " << serialNumber << " runs with input file " << fileName << endl;
 	std::ifstream file(fileName.c_str());
 	string currentCommand;
-
 	while(std::getline(file, currentCommand)){
 		// Convert command from string to char*
 		int commandLength = currentCommand.length();
@@ -158,7 +166,8 @@ void Atm::Run(){
 			WriteToLog(CHECK_BALANCE, args, commandResult);
 			break;
 		case TRANSFER:
-			// TODO: transfer money
+			commandResult = bank.BankTransfer(atoi(args[1]), args[2], atoi(args[3]), atoi(args[4]));
+			WriteToLog(TRANSFER, args, commandResult);
 			break;
 		default:
 			// TODO: illegal action (not needed)
