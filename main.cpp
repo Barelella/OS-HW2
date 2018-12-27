@@ -6,7 +6,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <cstdlib.h>
+#include <stdlib.h>
 #include <pthread.h>
 
 #include "Bank.h"
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]){
 
 	int atmsNum = ValidateInputArguments(argc, argv);
 	if(-1 == atmsNum){
-		perror("Illegal program arguments\n");
+		cout << "Illegal program arguments\n" << endl;
 		return 0;
 	}
 
@@ -108,20 +108,17 @@ int main(int argc, char* argv[]){
 
 	list<Atm> atm_list;
 
-	cout << "initializations ok" << endl;
 	// Create all Atms
 	for(int i = 0; i < atmsNum; i++){
 
 		Atm newAtm(bank, i+1, argv[i+2], log);
 		atm_list.push_back(newAtm);
 	}
-	cout << "ATMs created ok" << endl;
 
 	// Run all Atms
 	pthread_t atmThreads[atmsNum];
 	int i=0;
 	for(list<Atm>::iterator it = atm_list.begin(); it != atm_list.end(); ++it){
-		cout << "ATM " << i << " created" << endl;
 		if(0 != pthread_create(&atmThreads[i], NULL, AtmThreadFunction, (void*) &(*it))){
 			perror("Failed to create thread");
 			return 0;
@@ -151,9 +148,7 @@ int main(int argc, char* argv[]){
 
 	pthread_join(bankPrintThread, NULL);
     pthread_join(bankComThread, NULL);
-	cout << "ATMs finish" << endl;
 
 	bank.PrintStatus();		// Print bank final status
-	// Account account(2345, "ct", 0);
 	return 0;
 }
