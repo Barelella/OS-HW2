@@ -27,6 +27,9 @@ typedef enum {	SUCCESS,
 				TRANSFER_TARGET_DOESNT_EXIST,
 } Result;
 
+void AddReader(pthread_mutex_t& rd_lock, pthread_mutex_t& wrt_lock, int& rd_count);
+void RemoveReader(pthread_mutex_t& rd_lock, pthread_mutex_t& wrt_lock, int& rd_count);
+
 class Account {
 private:
 	const int accountNumber;
@@ -56,7 +59,7 @@ public:
     string GetPassword();
     int GetID() const;
     friend Result Transfer(string src_password, Account& dst, Account& src, int amount);
-    int GetAccountNumber();
+    int GetAccountNumber() const;
     bool operator<(Account&);
 };
 

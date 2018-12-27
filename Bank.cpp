@@ -8,7 +8,12 @@
 #include "Bank.h"
 using namespace std;
 
-
+//**************************************************************************************
+// function name: Bank
+// Description: constructor
+// Parameters: log file
+// Returns: new bank object
+//**************************************************************************************
 Bank::Bank(Log& log) : bankBalance(0), bankLog(log){
 	int ret1 = pthread_mutex_init(&printLock, NULL);
     int ret2 = pthread_mutex_init(&balanceLock, NULL);
@@ -16,6 +21,12 @@ Bank::Bank(Log& log) : bankBalance(0), bankLog(log){
     	perror("Bank mutex init error:");
 }
 
+//**************************************************************************************
+// function name: ~Bank
+// Description: default destructor
+// Parameters: none
+// Returns: none
+//**************************************************************************************
 Bank::~Bank() {
 	int ret1 = pthread_mutex_destroy(&printLock);
 	int ret2 = pthread_mutex_destroy(&balanceLock);
@@ -23,12 +34,19 @@ Bank::~Bank() {
 		perror("Bank mutex destroy error:");
 }
 
+//**************************************************************************************
+// function name: ChargeCommissions
+// Description: every 3 seconds charges commissions from accounts in account list
+//              that are not VIP
+// Parameters: none
+// Returns: none
+//**************************************************************************************
 void Bank::ChargeCommissions(){
 	int bank_gain;
     int percentage = 2 + rand()/(RAND_MAX/3 + 1); //getting a random num between [2,4]
     double doublepercent = 100/percentage;
     for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
-		if((it->IsVIP())==false){
+		if(!it->IsVIP()){
 			stringstream aux;
 			string password = it->GetPassword();
 			bank_gain = (int)(((double)(it->GetBalance(password, false)))/doublepercent+0.5);
@@ -45,6 +63,12 @@ void Bank::ChargeCommissions(){
 	return;
 }
 
+//**************************************************************************************
+// function name: PrintStatus
+// Description: prints bank status every 0.5 seconds
+// Parameters: none
+// Returns: none
+//**************************************************************************************
 void Bank::PrintStatus(){
 	pthread_mutex_lock(&printLock);
 	printf("\033[2J");		// Clear screen
@@ -62,6 +86,12 @@ void Bank::PrintStatus(){
 	pthread_mutex_unlock(&printLock);
 }
 
+//**************************************************************************************
+// function name: GetAccount
+// Description: finds an account with accountNumber in account list
+// Parameters: account number
+// Returns: account object
+//**************************************************************************************
 Account& Bank::GetAccount(int accountNumber){
 	for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
 		if(it->GetAccountNumber() == accountNumber){
@@ -72,6 +102,12 @@ Account& Bank::GetAccount(int accountNumber){
 	return *defaultAccount;
 }
 
+//**************************************************************************************
+// function name: IsAccountExist
+// Description: checks if account with accountNumber exists
+// Parameters: account number
+// Returns: true if exists, false otherwise
+//**************************************************************************************
 bool Bank::IsAccountExist(int accountNumber){
 	if(0 == accountNumber){		// atoi failed, given illegal number
 		return false;
@@ -85,6 +121,12 @@ bool Bank::IsAccountExist(int accountNumber){
 	return true;
 }
 
+//**************************************************************************************
+// function name: IsLegalPassword
+// Description: checks if password contains four digits
+// Parameters: password
+// Returns: true if legal, false otherwise
+//**************************************************************************************
 bool IsLegalPassword(string password){
 	if(password.length() != PASSWORD_LENGTH){
 		return false;
@@ -98,6 +140,12 @@ bool IsLegalPassword(string password){
 	return true;
 }
 
+//**************************************************************************************
+// function name: CreateAccount
+// Description: creates an account object and adds it to account list
+// Parameters: account number, password, initial balance
+// Returns: result of action
+//**************************************************************************************
 Result Bank::CreateAccount(int accountNumber, string password, int initialBalance){
 	if(0 == accountNumber){		// atoi failed, given illegal account number
 		return ACCOUNT_DOESNT_EXIST;
@@ -120,6 +168,12 @@ Result Bank::CreateAccount(int accountNumber, string password, int initialBalanc
 	return SUCCESS;
 }
 
+//**************************************************************************************
+// function name: MakeVip
+// Description: changes an account status to VIP
+// Parameters: account number, password
+// Returns: result of action
+//**************************************************************************************
 Result Bank::MakeVip(int accountNumber, string password){
 	if(!IsAccountExist(accountNumber)){
 		return ACCOUNT_DOESNT_EXIST;
@@ -127,6 +181,12 @@ Result Bank::MakeVip(int accountNumber, string password){
 	return GetAccount(accountNumber).MakeVIP(password);
 }
 
+//**************************************************************************************
+// function name: Deposit
+// Description: deposits money in an account
+// Parameters: account number, password, amount to deposit
+// Returns: result of action
+//**************************************************************************************
 Result Bank::Deposit(int accountNumber, string password, int amount){
 	if(!IsAccountExist(accountNumber)){
 		return ACCOUNT_DOESNT_EXIST;
@@ -134,6 +194,12 @@ Result Bank::Deposit(int accountNumber, string password, int amount){
 	return GetAccount(accountNumber).Deposit(password, amount);
 }
 
+//**************************************************************************************
+// function name: Withdraw
+// Description: withdraws money from an account
+// Parameters: account number, password, amount to withdraw
+// Returns: result of action
+//**************************************************************************************
 Result Bank::Withdraw(int accountNumber, string password, int amount){
 	if(!IsAccountExist(accountNumber)){
 		return ACCOUNT_DOESNT_EXIST;
@@ -141,6 +207,12 @@ Result Bank::Withdraw(int accountNumber, string password, int amount){
 	return GetAccount(accountNumber).Withdraw(password, amount);
 }
 
+//**************************************************************************************
+// function name: CreateAccount
+// Description: gets an account balance
+// Parameters: account number, password
+// Returns: result of action
+//**************************************************************************************
 Result Bank::GetBalance(int accountNumber, string password){
 	if(!IsAccountExist(accountNumber)){
 		return ACCOUNT_DOESNT_EXIST;
@@ -148,6 +220,12 @@ Result Bank::GetBalance(int accountNumber, string password){
 	return (GetAccount(accountNumber).GetBalance(password) == -1 ? PASSWORD_FAIL : SUCCESS);
 }
 
+//**************************************************************************************
+// function name: BankTransfer
+// Description: transfers money from one account to another
+// Parameters: source account number, password, target account number, amount
+// Returns: result of action
+//**************************************************************************************
 Result Bank::BankTransfer(int srcAccountNum, string password, int dstAccountNum, int amount){
 	if(!IsAccountExist(srcAccountNum)){
 		return ACCOUNT_DOESNT_EXIST;

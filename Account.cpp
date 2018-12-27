@@ -10,26 +10,44 @@ using namespace std;
 
 
 ///read-write functions
+//**************************************************************************************
+// function name: AddReader
+// Description: part of the reader-writer protection
+// Parameters: reader's lock, writer's lock, readers counter
+// Returns: None
+//**************************************************************************************
 void AddReader(pthread_mutex_t& rd_lock, pthread_mutex_t& wrt_lock, int& rd_count){
     pthread_mutex_lock(&rd_lock);
         rd_count++;
-        if(rd_count==1)
+        if(rd_count==1) {
             //if someone is writing, wait
             pthread_mutex_lock(&wrt_lock);
+        }
     pthread_mutex_unlock(&rd_lock);
 }
 
-
+//**************************************************************************************
+// function name: RemoveReader
+// Description: part of the reader-writer protection
+// Parameters: reader's lock, writer's lock, readers counter
+// Returns: None
+//**************************************************************************************
 void RemoveReader(pthread_mutex_t& rd_lock, pthread_mutex_t& wrt_lock, int& rd_count){
     pthread_mutex_lock(&rd_lock);
         rd_count--;
-        if(rd_count==0)
+        if(rd_count==0) {
             pthread_mutex_unlock(&wrt_lock);
+        }
     pthread_mutex_unlock(&rd_lock);
 }
 
-
-// Default constructor
+///Account methods
+//**************************************************************************************
+// function name: Account
+// Description: default constructor
+// Parameters: none
+// Returns: new account
+//**************************************************************************************
 Account::Account():
 		accountNumber(-1), password("0000"), balance(0), isVIP(false){
     balance_rd_cnt = 0;
@@ -40,7 +58,12 @@ Account::Account():
     pthread_mutex_init(&rd_VIP, NULL);
 }
 
-///Account methods
+//**************************************************************************************
+// function name: Account
+// Description: constructor
+// Parameters: account number, password, initial balance
+// Returns: new account
+//**************************************************************************************
 Account::Account(int acc_num_, string password_, int balance_) :
 	accountNumber(acc_num_), password(password_), balance(balance_), isVIP(false){
     //counters
@@ -53,7 +76,12 @@ Account::Account(int acc_num_, string password_, int balance_) :
 	pthread_mutex_init(&rd_VIP, NULL);
 }
 
-
+//**************************************************************************************
+// function name: ~Account
+// Description: default destructor
+// Parameters: none
+// Returns: none
+//**************************************************************************************
 Account::~Account() {
 	pthread_mutex_destroy(&wrt_balance);
 	pthread_mutex_destroy(&rd_balance);
@@ -61,7 +89,12 @@ Account::~Account() {
 	pthread_mutex_destroy(&rd_VIP);
 }
 
-
+//**************************************************************************************
+// function name: Deposit
+// Description: deposits money in the account
+// Parameters: password, sum: amount of money to deposit
+// Returns: PASSWORD_FAIL if password is incorrect, SUCCESS otherwise
+//**************************************************************************************
 Result Account::Deposit(string atm_password, int sum){
     if(atm_password != password)
         return PASSWORD_FAIL;
@@ -72,7 +105,14 @@ Result Account::Deposit(string atm_password, int sum){
     return SUCCESS;
 }
 
-
+//**************************************************************************************
+// function name: Withdraw
+// Description: withdraws money from the account
+// Parameters: password, sum: amount of money to withdraw,
+//             needAtmWait: true if atm has to wait after action
+// Returns: PASSWORD_FAIL if password is incorrect, AMOUNT_FAIL if there's not enough money,
+//          SUCCESS otherwise
+//**************************************************************************************
 Result Account::Withdraw(string atm_password, int sum, bool needAtmWait){
     if(atm_password != password)
         return PASSWORD_FAIL;
@@ -84,15 +124,20 @@ Result Account::Withdraw(string atm_password, int sum, bool needAtmWait){
     RemoveReader(rd_balance, wrt_balance, balance_rd_cnt);
     //changing the balance
     pthread_mutex_lock(&wrt_balance);
-		balance -= sum;
-		if(needAtmWait){
-			sleep(1);
-		}
+    balance -= sum;
+    if(needAtmWait){
+        sleep(1);
+    }
     pthread_mutex_unlock(&wrt_balance);
     return SUCCESS;
 }
 
-
+//**************************************************************************************
+// function name: IsVip
+// Description: checks the account VIP status
+// Parameters: none
+// Returns: VIP status
+//**************************************************************************************
 //does not need a password, used only by the bank
 bool Account::IsVIP(){
 	bool vip_stat;
@@ -102,7 +147,12 @@ bool Account::IsVIP(){
 	return vip_stat;
 }
 
-
+//**************************************************************************************
+// function name: MakeVip
+// Description: changes account status to VIP
+// Parameters: password
+// Returns: PASSWORD_FAIL if password is incorrect, SUCCESS otherwise
+//**************************************************************************************
 Result Account::MakeVIP(string atm_password){
     if(password!=atm_password)
         return PASSWORD_FAIL;
@@ -113,11 +163,13 @@ Result Account::MakeVIP(string atm_password){
     return SUCCESS;
 }
 
-int Account::GetID() const{
-    return accountNumber;
-}
-
-int Account::GetBalance(string atm_password,bool needAtmWait){
+//**************************************************************************************
+// function name: GetBalance
+// Description: returns the account balance
+// Parameters: password, needAtmWait: true if atm has to wait after action
+// Returns: -1 if password is incorrect, account balance otherwise
+//**************************************************************************************
+int Account::GetBalance(string atm_password, bool needAtmWait){
     if(password!=atm_password)
         return -1;
     int balance_stat;
@@ -130,12 +182,23 @@ int Account::GetBalance(string atm_password,bool needAtmWait){
     return balance_stat;
 }
 
-// Needed by the bank for printing
+//**************************************************************************************
+// function name: GetPassword
+// Description: gets account password - for bank status printing
+// Parameters: none
+// Returns: account password
+//**************************************************************************************
 string Account::GetPassword(){
 	return password;
 }
 
-
+//**************************************************************************************
+// function name: Transfer
+// Description: transfers money from one account to another
+// Parameters: source account password, target account, source account, amount to transfer
+// Returns: PASSWORD_FAIL if password is incorrect, AMOUNT_FAIL if there's not enough money,
+//          SUCCESS otherwise
+//**************************************************************************************
 Result Transfer(const string src_password, Account& dst, Account& src, int amount){
     if(src_password != src.password)
         return PASSWORD_FAIL;
@@ -145,6 +208,7 @@ Result Transfer(const string src_password, Account& dst, Account& src, int amoun
         return AMOUNT_FAIL;
     }
     RemoveReader(src.rd_balance, src.wrt_balance, src.balance_rd_cnt);
+    //checking account numbers to prevent deadlock
     if (src.accountNumber < dst.accountNumber) {
         pthread_mutex_lock(&src.wrt_balance);
         pthread_mutex_lock(&dst.wrt_balance);
@@ -166,10 +230,22 @@ Result Transfer(const string src_password, Account& dst, Account& src, int amoun
     return SUCCESS;
 }
 
-int Account::GetAccountNumber(){
+//**************************************************************************************
+// function name: GetAccountNumber
+// Description: gets account number
+// Parameters: none
+// Returns: account number
+//**************************************************************************************
+int Account::GetAccountNumber() const{
 	return accountNumber;
 }
 
+//**************************************************************************************
+// function name: operator <
+// Description: checks which account number is bigger
+// Parameters: other account
+// Returns: bool variable
+//**************************************************************************************
 bool Account::operator<(Account& otherAccount){
 	return (GetAccountNumber() < otherAccount.GetAccountNumber());
 }
