@@ -22,6 +22,9 @@ private:
 	int bankBalance;
 	pthread_mutex_t printLock;
     pthread_mutex_t balanceLock;
+    pthread_mutex_t accountsReadLock;
+    pthread_mutex_t accountsWriteLock;
+    int accountsReadersNum;
 	Log& bankLog;
 
 public:

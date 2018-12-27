@@ -14,10 +14,14 @@ using namespace std;
 // Parameters: log file
 // Returns: new bank object
 //**************************************************************************************
-Bank::Bank(Log& log) : bankBalance(0), bankLog(log){
+Bank::Bank(Log& log) : bankBalance(0), accountsReadersNum(0), bankLog(log){
 	int ret1 = pthread_mutex_init(&printLock, NULL);
     int ret2 = pthread_mutex_init(&balanceLock, NULL);
-    if ((ret1 != 0)||(ret2 != 0))
+    int ret3 = pthread_mutex_init(&accountsReadLock, NULL);
+    int ret4 = pthread_mutex_init(&accountsWriteLock, NULL);
+
+
+    if (ret1 || ret2 || ret3 || ret4)
     	perror("Bank mutex init error:");
 }
 
@@ -30,7 +34,10 @@ Bank::Bank(Log& log) : bankBalance(0), bankLog(log){
 Bank::~Bank() {
 	int ret1 = pthread_mutex_destroy(&printLock);
 	int ret2 = pthread_mutex_destroy(&balanceLock);
-	if ((ret1 != 0)||(ret2 != 0))
+    int ret3 = pthread_mutex_destroy(&accountsReadLock);
+    int ret4 = pthread_mutex_destroy(&accountsWriteLock);
+
+    if (ret1 || ret2 || ret3 || ret4)
 		perror("Bank mutex destroy error:");
 }
 
@@ -45,6 +52,8 @@ void Bank::ChargeCommissions(){
 	int bank_gain;
     int percentage = 2 + rand()/(RAND_MAX/3 + 1); //getting a random num between [2,4]
     double doublepercent = 100/percentage;
+
+    AddReader(accountsReadLock, accountsWriteLock, accountsReadersNum);
     for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
 		if(!it->IsVIP()){
 			stringstream aux;
@@ -60,6 +69,7 @@ void Bank::ChargeCommissions(){
 			bankLog.WriteLine(aux);
 		}
     }
+    RemoveReader(accountsReadLock, accountsWriteLock, accountsReadersNum);
 	return;
 }
 
@@ -70,19 +80,25 @@ void Bank::ChargeCommissions(){
 // Returns: none
 //**************************************************************************************
 void Bank::PrintStatus(){
-	pthread_mutex_lock(&printLock);
-	printf("\033[2J");		// Clear screen
-	printf("\033[1;1H");	// Initialize cursor
-	cout << "Current Bank Status" << endl;
+	stringstream aux;
+	aux << "\033[2J";		// Clear screen
+	aux << "\033[1;1H";	// Initialize cursor
+	aux << "Current Bank Status" << endl;
 
+	AddReader(accountsReadLock, accountsWriteLock, accountsReadersNum);
 	for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
-		cout << "Account " << it->GetAccountNumber() << ": ";
-		cout << "Balance - " << it->GetBalance(it->GetPassword(), false) << " $ , ";
-		cout << "Account Password - " << it->GetPassword() << endl;
+		aux << "Account " << it->GetAccountNumber() << ": ";
+		aux << "Balance - " << it->GetBalance(it->GetPassword(), false) << " $ , ";
+		aux << "Account Password - " << it->GetPassword() << endl;
 	}
+	RemoveReader(accountsReadLock, accountsWriteLock, accountsReadersNum);
+
 	pthread_mutex_lock(&balanceLock);
-	cout << "The Bank has " << bankBalance << " $" << endl;
+	aux << "The Bank has " << bankBalance << " $" << endl;
 	pthread_mutex_unlock(&balanceLock);
+
+	pthread_mutex_lock(&printLock);
+	cout << aux.str();
 	pthread_mutex_unlock(&printLock);
 }
 
@@ -93,11 +109,14 @@ void Bank::PrintStatus(){
 // Returns: account object
 //**************************************************************************************
 Account& Bank::GetAccount(int accountNumber){
+	AddReader(accountsReadLock, accountsWriteLock, accountsReadersNum);
 	for(list<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it){
 		if(it->GetAccountNumber() == accountNumber){
+			RemoveReader(accountsReadLock, accountsWriteLock, accountsReadersNum);
 			return (*it);
 		}
 	}
+	RemoveReader(accountsReadLock, accountsWriteLock, accountsReadersNum);
 	Account *defaultAccount = new Account();
 	return *defaultAccount;
 }
@@ -161,8 +180,10 @@ Result Bank::CreateAccount(int accountNumber, string password, int initialBalanc
 	}
 	// All parameters are OK, insert new account to list (and keep it sorted)
 	Account newAccount(accountNumber, password, initialBalance);
-	accounts.push_back(newAccount);
-	accounts.sort();
+	pthread_mutex_lock(&accountsWriteLock);
+		accounts.push_back(newAccount);
+		accounts.sort();
+	pthread_mutex_unlock(&accountsWriteLock);
 	sleep(1);
 
 	return SUCCESS;
@@ -233,7 +254,12 @@ Result Bank::BankTransfer(int srcAccountNum, string password, int dstAccountNum,
 	if(!IsAccountExist(dstAccountNum)){
 		return ACCOUNT_DOESNT_EXIST;
 	}
+	if(srcAccountNum == dstAccountNum){
+		sleep(1);
+		return SUCCESS;
+	}
 	Account& srcAccount = GetAccount(srcAccountNum);
 	Account& dstAccount = GetAccount(dstAccountNum);
-	return Transfer(password, dstAccount, srcAccount, amount);
+	Result transferResult = Transfer(password, dstAccount, srcAccount, amount);
+	return transferResult;
 }
