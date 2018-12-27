@@ -10,15 +10,33 @@
 const int MAX_ARG = 15;
 const unsigned int ATM_USLEEP = 100000;
 
+//**************************************************************************************
+// function name: Atm
+// Description: constructor
+// Parameters: bank, atm's serial number, name of file to run, log file
+// Returns: new Atm object
+//**************************************************************************************
 Atm::Atm(Bank& bank, int serialNumber, string fileName, Log& log) :
 	bank(bank), serialNumber(serialNumber), fileName(fileName), log(log){
 
 }
 
+//**************************************************************************************
+// function name: ~Atm
+// Description: default destructor
+// Parameters: none
+// Returns: none
+//**************************************************************************************
 Atm::~Atm() {
 
 }
 
+//**************************************************************************************
+// function name: CommandToAction
+// Description: translates a command char to action
+// Parameters: command char
+// Returns: action needed
+//**************************************************************************************
 Action CommandToAction(char commandChar){
 	switch(commandChar){
 	case 'O':
@@ -38,6 +56,12 @@ Action CommandToAction(char commandChar){
 	}
 }
 
+//**************************************************************************************
+// function name: WriteToLog
+// Description: writes atm's actions and errors to log
+// Parameters: action, arguments, error
+// Returns: none
+//**************************************************************************************
 void Atm::WriteToLog(Action action, char* args[], Result error){
 	stringstream aux;
 	switch(error) {
@@ -106,7 +130,6 @@ void Atm::WriteToLog(Action action, char* args[], Result error){
 		    }
 		}break;
 		default: {
-			cout<<"def"<<endl;
 			break;
 		}
 
@@ -117,8 +140,13 @@ void Atm::WriteToLog(Action action, char* args[], Result error){
 
 }
 
+//**************************************************************************************
+// function name: Run
+// Description: executes commands in atm's file
+// Parameters: none
+// Returns: none
+//**************************************************************************************
 void Atm::Run(){
-	// cout << "Atm no. " << serialNumber << " runs with input file " << fileName << endl;
 	std::ifstream file(fileName.c_str());
 	string currentCommand;
 	while(std::getline(file, currentCommand)){
@@ -173,7 +201,6 @@ void Atm::Run(){
 			WriteToLog(TRANSFER, args, commandResult);
 			break;
 		default:
-			// TODO: illegal action (not needed)
 			break;
 		}
 		delete[] command;
